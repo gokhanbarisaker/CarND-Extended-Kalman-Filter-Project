@@ -79,14 +79,14 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
       double rho_dot = measurement_pack.raw_measurements_[2];
       double x = rho * cos(phi);
 
-      if (x < 0.0001)
+      if (abs(x) < 0.0001)
       {
         x = 0.0001;
       }
 
       double y = rho * sin(phi);
 
-      if (y < 0.0001)
+      if (abs(y) < 0.0001)
       {
         y = 0.0001;
       }
@@ -104,6 +104,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
           0,
           0;
     }
+
+    previous_timestamp_ = measurement_pack.timestamp_;
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
@@ -139,6 +141,7 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
   double dt_4_quarter = dt_4 * 0.25;
 
   ekf_.Q_ = MatrixXd(4, 4);
+  tools.initQ(ekf_.Q_, dt, noise_ax, noise_ay);
 
   ekf_.Predict();
 
@@ -152,7 +155,6 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack)
    * - Update the state and covariance matrices.
    */
   tools.initF(ekf_.F_, dt);
-  tools.initQ(ekf_.Q_, dt, noise_ax, noise_ay);
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR)
   {
